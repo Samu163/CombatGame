@@ -3,12 +3,32 @@ guid: 962b5677a52f7ec408bff27dd9d52bd3
 ModelImporter:
   serializedVersion: 22200
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: body_material3
+    second: {fileID: 2100000, guid: ad95a2d337cee3c45bbf4170a33fa858, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: head_material
+    second: {fileID: 2100000, guid: 25daf73c77fc0b94787bb80eba0591d2, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: head_material3
+    second: {fileID: 2100000, guid: e13e184fcec7c034d9f3e7fd7e595ac8, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: scythe_mat
+    second: {fileID: 2100000, guid: 5014aea6f8e501a42bdfaf09d9f357d9, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0
-    materialSearch: 1
-    materialLocation: 1
+    materialSearch: 2
+    materialLocation: 0
   animations:
     legacyGenerateAnimations: 4
     bakeSimulation: 0

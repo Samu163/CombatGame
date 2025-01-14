@@ -39,6 +39,7 @@ public class PlayerController : MonoBehaviour
     private bool isJumping = false;
     private bool isCrouching = false;
 
+    public bool isplayer2 = false;
     private void Start()
     {
         animator = GetComponent<Animator>();
@@ -62,13 +63,13 @@ public class PlayerController : MonoBehaviour
 
         if (isMovingForward)
         {
-            movementDirection = 1; // Mover adelante
+            movementDirection = 1.5f; // Mover adelante
             animator.SetBool("WalkForward", true);
             animator.SetBool("WalkBackward", false);
         }
         else if (isMovingBackward)
         {
-            movementDirection = -1; // Mover atrás
+            movementDirection = -1.5f; // Mover atrás
             animator.SetBool("WalkForward", false);
             animator.SetBool("WalkBackward", true);
         }
@@ -91,10 +92,16 @@ public class PlayerController : MonoBehaviour
         if (Input.GetKeyDown(quickLowKey)) // Quick Low Attack
         {
             animator.SetTrigger("QuickLow");
+            if (isplayer2)
+            {
+                MoveDuringAttack(4f, 0f);
+            }
+
         }
         else if (Input.GetKeyDown(slowLowKey)) // Slow Low Attack
         {
             animator.SetTrigger("SlowLow");
+         
         }
         else if (Input.GetKeyDown(quickHighKey)) // Quick High Attack
         {
@@ -102,7 +109,11 @@ public class PlayerController : MonoBehaviour
         }
         else if (Input.GetKeyDown(slowHighKey)) // Slow High Attack
         {
-            animator.SetTrigger("SlowHigh");
+            if (isplayer2)
+            {
+                animator.SetTrigger("SlowHigh");
+                MoveDuringAttack(13f, 0.7f);
+            }
         }
         else if (Input.GetKeyDown(dodgeHighKey)) // Dodge High Attack
         {
@@ -116,7 +127,29 @@ public class PlayerController : MonoBehaviour
             StartCoroutine(PerformJump());
         }
     }
+    private void MoveDuringAttack(float distance, float delay = 0.1f)
+    {
+        StartCoroutine(SmoothMove(distance, delay));
+    }
 
+    private IEnumerator SmoothMove(float distance, float delay)
+    {
+        yield return new WaitForSeconds(delay); // Wait before moving
+
+        float duration = 0.2f; // Time for the movement to complete
+        float elapsedTime = 0f;
+        Vector3 startPosition = transform.position;
+        Vector3 endPosition = startPosition + transform.forward * distance;
+
+        while (elapsedTime < duration)
+        {
+            transform.position = Vector3.Lerp(startPosition, endPosition, elapsedTime / duration);
+            elapsedTime += Time.deltaTime;
+            yield return null; // Wait for the next frame
+        }
+
+        transform.position = endPosition; // Ensure final position is exactly the target
+    }
     private IEnumerator PerformCrouch()
     {
         if (isCrouching) yield break;
@@ -140,7 +173,8 @@ public class PlayerController : MonoBehaviour
 
         // Obtener la duración de la animación de agacharse
         AnimatorStateInfo stateInfo = animator.GetCurrentAnimatorStateInfo(0);
-        yield return new WaitForSeconds(stateInfo.length /2.0f);
+        //yield return new WaitForSeconds(stateInfo.length/2.0f);
+        yield return new WaitForSeconds(stateInfo.length);
 
         isJumping = false;
     }
@@ -148,7 +182,7 @@ public class PlayerController : MonoBehaviour
     public void TakeDamage()
     {
         animator.SetTrigger("Lose");
-        GameManager.instance.PlayerDefeated(this);
+        GameManager.instance.PlayerDefeated(this);  
     }
 
     public void TriggerWin()
