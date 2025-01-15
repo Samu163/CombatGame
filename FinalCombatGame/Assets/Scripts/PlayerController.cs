@@ -101,7 +101,7 @@ public class PlayerController : MonoBehaviour
             animator.SetTrigger("QuickLow");
             if (isplayer2)
             {
-                MoveDuringAttack(4f, 0f);
+                MoveDuringAttack(1f, 0f);
             }
 
         }
@@ -116,10 +116,10 @@ public class PlayerController : MonoBehaviour
         }
         else if (Input.GetKeyDown(slowHighKey)) // Slow High Attack
         {
+            animator.SetTrigger("SlowHigh");
             if (isplayer2)
             {
-                animator.SetTrigger("SlowHigh");
-                MoveDuringAttack(13f, 0.7f);
+                MoveDuringAttack(3f, 0.7f);
             }
         }
         else if (Input.GetKeyDown(dodgeHighKey)) // Dodge High Attack
