@@ -38,6 +38,7 @@ public class PlayerController : MonoBehaviour
     private bool inmuneToLowAttacks = false;
     private bool isJumping = false;
     private bool isCrouching = false;
+    private bool canMove = false;
     private Rigidbody rb;
 
     public bool isplayer2 = false;
@@ -58,35 +59,39 @@ public class PlayerController : MonoBehaviour
 
     private void HandleMovement()
     {
-        // Movimiento basado en las teclas
-        bool isMovingForward = Input.GetKey(moveForwardKey) && !blockForward;
-        bool isMovingBackward = Input.GetKey(moveBackwardKey) && !blockBackward;
-        float movementDirection = 0;
+        
+            // Movimiento basado en las teclas
+            bool isMovingForward = Input.GetKey(moveForwardKey) && !blockForward;
+            bool isMovingBackward = Input.GetKey(moveBackwardKey) && !blockBackward;
+            float movementDirection = 0;
 
-        if (isMovingForward)
-        {
-            movementDirection = 1.5f; // Mover adelante
-            animator.SetBool("WalkForward", true);
-            animator.SetBool("WalkBackward", false);
-        }
-        else if (isMovingBackward)
-        {
-            movementDirection = -1.5f; // Mover atrás
-            animator.SetBool("WalkForward", false);
-            animator.SetBool("WalkBackward", true);
-        }
-        else
-        {
-            animator.SetBool("WalkForward", false);
-            animator.SetBool("WalkBackward", false);
-        }
+            if (isMovingForward)
+            {
+                movementDirection = 1.5f; // Mover adelante
+                animator.SetBool("WalkForward", true);
+                animator.SetBool("WalkBackward", false);
+            }
+            else if (isMovingBackward)
+            {
+                movementDirection = -1.5f; // Mover atrás
+                animator.SetBool("WalkForward", false);
+                animator.SetBool("WalkBackward", true);
+            }
+            else
+            {
+                animator.SetBool("WalkForward", false);
+                animator.SetBool("WalkBackward", false);
+            }
 
-        // Actualiza la posición solo si no está bloqueada
-        Vector3 position = transform.position;
-        position.z = Mathf.Clamp(position.z + movementDirection * movementSpeed * Time.deltaTime,
-                                 stageBounds.position.z - stageBounds.localScale.z / 2,
-                                 stageBounds.position.z + stageBounds.localScale.z / 2);
-        transform.position = position;
+            // Actualiza la posición solo si no está bloqueada
+
+            Vector3 position = transform.position;
+            position.z = Mathf.Clamp(position.z + movementDirection * movementSpeed * Time.deltaTime,
+                                     stageBounds.position.z - stageBounds.localScale.z / 2,
+                                     stageBounds.position.z + stageBounds.localScale.z / 2);
+            transform.position = position;
+        
+       
     }
 
     private void HandleAttacks()
@@ -181,7 +186,7 @@ public class PlayerController : MonoBehaviour
 
         // Obtener la duración de la animación de agacharse
         AnimatorStateInfo stateInfo = animator.GetCurrentAnimatorStateInfo(0);
-        rb.AddForce(Vector3.up * 105f, ForceMode.Impulse); // Apply upward force
+        rb.AddForce(Vector3.up * 5f, ForceMode.Impulse); // Apply upward force
         //yield return new WaitForSeconds(stateInfo.length/2.0f);
         yield return new WaitForSeconds(stateInfo.length);
 
