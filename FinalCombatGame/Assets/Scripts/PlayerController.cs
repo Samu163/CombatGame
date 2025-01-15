@@ -1,12 +1,13 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using TMPro; // Updated for TextMeshProUGUI
 
 public class PlayerController : MonoBehaviour
 {
     [Header("Player Settings")]
-    public KeyCode moveForwardKey = KeyCode.W; // Tecla para avanzar
-    public KeyCode moveBackwardKey = KeyCode.S; // Tecla para retroceder
+    public KeyCode moveForwardKey = KeyCode.W;
+    public KeyCode moveBackwardKey = KeyCode.S;
     public KeyCode quickLowKey = KeyCode.Z;
     public KeyCode slowLowKey = KeyCode.X;
     public KeyCode quickHighKey = KeyCode.C;
@@ -28,6 +29,8 @@ public class PlayerController : MonoBehaviour
     public Transform lowAttackPoint;
     public LayerMask opponentLayer;
 
+    public float knockbackForce = 5.0f; // New knockback force setting
+
     private Animator animator;
     private bool isDefeated = false;
     public string hitTag = "KongHit";
@@ -41,12 +44,22 @@ public class PlayerController : MonoBehaviour
     private bool canMove = false;
     private Rigidbody rb;
 
+    [Header("Life Settings")]
+    public int maxLives = 25;
+    private int currentLives;
+
+    [Header("UI Settings")]
+    public TextMeshProUGUI livesText; // Updated to TextMeshProUGUI
+
     public bool isplayer2 = false;
+
     private void Start()
     {
         rb = GetComponent<Rigidbody>();
         animator = GetComponent<Animator>();
         previousMovementSpeed = movementSpeed;
+        currentLives = maxLives;
+        UpdateLivesUI();
     }
 
     private void Update()
@@ -59,81 +72,73 @@ public class PlayerController : MonoBehaviour
 
     private void HandleMovement()
     {
-        
-            // Movimiento basado en las teclas
-            bool isMovingForward = Input.GetKey(moveForwardKey) && !blockForward;
-            bool isMovingBackward = Input.GetKey(moveBackwardKey) && !blockBackward;
-            float movementDirection = 0;
+        bool isMovingForward = Input.GetKey(moveForwardKey) && !blockForward;
+        bool isMovingBackward = Input.GetKey(moveBackwardKey) && !blockBackward;
+        float movementDirection = 0;
 
-            if (isMovingForward)
-            {
-                movementDirection = 1.5f; // Mover adelante
-                animator.SetBool("WalkForward", true);
-                animator.SetBool("WalkBackward", false);
-            }
-            else if (isMovingBackward)
-            {
-                movementDirection = -1.5f; // Mover atrás
-                animator.SetBool("WalkForward", false);
-                animator.SetBool("WalkBackward", true);
-            }
-            else
-            {
-                animator.SetBool("WalkForward", false);
-                animator.SetBool("WalkBackward", false);
-            }
+        if (isMovingForward)
+        {
+            movementDirection = 1.5f;
+            animator.SetBool("WalkForward", true);
+            animator.SetBool("WalkBackward", false);
+        }
+        else if (isMovingBackward)
+        {
+            movementDirection = -1.5f;
+            animator.SetBool("WalkForward", false);
+            animator.SetBool("WalkBackward", true);
+        }
+        else
+        {
+            animator.SetBool("WalkForward", false);
+            animator.SetBool("WalkBackward", false);
+        }
 
-            // Actualiza la posición solo si no está bloqueada
-
-            Vector3 position = transform.position;
-            position.z = Mathf.Clamp(position.z + movementDirection * movementSpeed * Time.deltaTime,
-                                     stageBounds.position.z - stageBounds.localScale.z / 2,
-                                     stageBounds.position.z + stageBounds.localScale.z / 2);
-            transform.position = position;
-        
-       
+        Vector3 position = transform.position;
+        position.z = Mathf.Clamp(position.z + movementDirection * movementSpeed * Time.deltaTime,
+                                 stageBounds.position.z - stageBounds.localScale.z / 2,
+                                 stageBounds.position.z + stageBounds.localScale.z / 2);
+        transform.position = position;
     }
 
     private void HandleAttacks()
     {
-        if (Input.GetKeyDown(quickLowKey)) // Quick Low Attack
+        if (Input.GetKeyDown(quickLowKey))
         {
             animator.SetTrigger("QuickLow");
             if (isplayer2)
             {
-                MoveDuringAttack(1f, 0f);
+                MoveDuringAttack(3f, 0.3f);
             }
-
         }
-        else if (Input.GetKeyDown(slowLowKey)) // Slow Low Attack
+        else if (Input.GetKeyDown(slowLowKey))
         {
             animator.SetTrigger("SlowLow");
-         
         }
-        else if (Input.GetKeyDown(quickHighKey)) // Quick High Attack
+        else if (Input.GetKeyDown(quickHighKey))
         {
             animator.SetTrigger("QuickHigh");
         }
-        else if (Input.GetKeyDown(slowHighKey)) // Slow High Attack
+        else if (Input.GetKeyDown(slowHighKey))
         {
             animator.SetTrigger("SlowHigh");
             if (isplayer2)
             {
-                MoveDuringAttack(3f, 0.7f);
+                MoveDuringAttack(8f, 0.7f);
             }
         }
-        else if (Input.GetKeyDown(dodgeHighKey)) // Dodge High Attack
+        else if (Input.GetKeyDown(dodgeHighKey))
         {
             animator.SetTrigger("EvadeHigh");
             StartCoroutine(PerformCrouch());
-
         }
-        else if (Input.GetKeyDown(evadeLowKey)) // Evade Low Attack
+        else if (Input.GetKeyDown(evadeLowKey))
         {
             animator.SetTrigger("EvadeLow");
             StartCoroutine(PerformJump());
         }
     }
+
     private void MoveDuringAttack(float distance, float delay = 0.1f)
     {
         StartCoroutine(SmoothMove(distance, delay));
@@ -141,28 +146,26 @@ public class PlayerController : MonoBehaviour
 
     private IEnumerator SmoothMove(float distance, float delay)
     {
-         
-        yield return new WaitForSeconds(delay); // Wait before moving
+        yield return new WaitForSeconds(delay);
 
-
-        float duration = 0.2f; // Time for the movement to complete
+        float duration = 0.2f;
         float elapsedTime = 0f;
         Vector3 startPosition = transform.position;
         Vector3 endPosition = startPosition + transform.forward * distance;
 
         while (elapsedTime < duration)
         {
-            if(!blockForward && !blockBackward)
+            if (!blockForward && !blockBackward)
             {
                 transform.position = Vector3.Lerp(startPosition, endPosition, elapsedTime / duration);
                 elapsedTime += Time.deltaTime;
-
             }
-            yield return null; // Wait for the next frame
+            yield return null;
         }
 
-        transform.position = endPosition; // Ensure final position is exactly the target
+        transform.position = endPosition;
     }
+
     private IEnumerator PerformCrouch()
     {
         if (isCrouching) yield break;
@@ -175,19 +178,16 @@ public class PlayerController : MonoBehaviour
 
         isCrouching = false;
     }
+
     private IEnumerator PerformJump()
     {
         if (isJumping) yield break;
         isJumping = true;
 
-        //animator.SetTrigger("EvadeHigh");
-        // Esperar hasta que la animación de agacharse comience
         yield return new WaitUntil(() => animator.GetCurrentAnimatorStateInfo(0).IsName("EvadeLow"));
 
-        // Obtener la duración de la animación de agacharse
         AnimatorStateInfo stateInfo = animator.GetCurrentAnimatorStateInfo(0);
-        rb.AddForce(Vector3.up * 5f, ForceMode.Impulse); // Apply upward force
-        //yield return new WaitForSeconds(stateInfo.length/2.0f);
+        rb.AddForce(Vector3.up * 5f, ForceMode.Impulse);
         yield return new WaitForSeconds(stateInfo.length);
 
         isJumping = false;
@@ -195,8 +195,29 @@ public class PlayerController : MonoBehaviour
 
     public void TakeDamage()
     {
-        animator.SetTrigger("Lose");
-        GameManager.instance.PlayerDefeated(this);  
+        currentLives--;
+        UpdateLivesUI();
+        ApplyKnockback(); // Apply knockback when damage is taken
+        if (currentLives <= 0)
+        {
+            animator.SetTrigger("Lose");
+            GameManager.instance.PlayerDefeated(this);
+            isDefeated = true;
+        }
+    }
+
+    private void ApplyKnockback()
+    {
+        Vector3 knockbackDirection = -transform.forward;
+        rb.AddForce(knockbackDirection * knockbackForce*3, ForceMode.Impulse);
+    }
+
+    private void UpdateLivesUI()
+    {
+        if (livesText != null)
+        {
+            livesText.text = "Lives: " + currentLives;
+        }
     }
 
     public void TriggerWin()
@@ -204,10 +225,8 @@ public class PlayerController : MonoBehaviour
         animator.SetTrigger("Win");
     }
 
-
     private void OnCollisionEnter(Collision collision)
     {
-
         if (collision.gameObject.CompareTag("Player"))
         {
             Vector3 contactPoint = collision.contacts[0].point;
@@ -224,34 +243,19 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-
     private void OnTriggerEnter(Collider other)
     {
-        if (other.CompareTag(hitTag + "High") )
+        if (other.CompareTag(hitTag + "High"))
         {
-            if(isCrouching)
-            {
-                return;
-            }
-            else
-            {
-                TakeDamage();
-
-            }
+            if (isCrouching) return;
+            TakeDamage();
         }
-        else if(other.CompareTag(hitTag + "Low"))
+        else if (other.CompareTag(hitTag + "Low"))
         {
-            if (isJumping)
-            {
-                return;
-            }
-            else
-            {
-                TakeDamage();
-            }
+            if (isJumping) return;
+            TakeDamage();
         }
     }
-
 
     private void OnCollisionExit(Collision collision)
     {
@@ -261,6 +265,7 @@ public class PlayerController : MonoBehaviour
             blockBackward = false;
         }
     }
+
     private bool inputsBlocked = false;
 
     public void BlockInputs()
@@ -272,5 +277,4 @@ public class PlayerController : MonoBehaviour
     {
         inputsBlocked = false;
     }
-
 }
