@@ -38,10 +38,12 @@ public class PlayerController : MonoBehaviour
     private bool inmuneToLowAttacks = false;
     private bool isJumping = false;
     private bool isCrouching = false;
+    private Rigidbody rb;
 
     public bool isplayer2 = false;
     private void Start()
     {
+        rb = GetComponent<Rigidbody>();
         animator = GetComponent<Animator>();
         previousMovementSpeed = movementSpeed;
     }
@@ -134,7 +136,9 @@ public class PlayerController : MonoBehaviour
 
     private IEnumerator SmoothMove(float distance, float delay)
     {
+         
         yield return new WaitForSeconds(delay); // Wait before moving
+
 
         float duration = 0.2f; // Time for the movement to complete
         float elapsedTime = 0f;
@@ -143,8 +147,12 @@ public class PlayerController : MonoBehaviour
 
         while (elapsedTime < duration)
         {
-            transform.position = Vector3.Lerp(startPosition, endPosition, elapsedTime / duration);
-            elapsedTime += Time.deltaTime;
+            if(!blockForward && !blockBackward)
+            {
+                transform.position = Vector3.Lerp(startPosition, endPosition, elapsedTime / duration);
+                elapsedTime += Time.deltaTime;
+
+            }
             yield return null; // Wait for the next frame
         }
 
@@ -173,6 +181,7 @@ public class PlayerController : MonoBehaviour
 
         // Obtener la duración de la animación de agacharse
         AnimatorStateInfo stateInfo = animator.GetCurrentAnimatorStateInfo(0);
+        rb.AddForce(Vector3.up * 105f, ForceMode.Impulse); // Apply upward force
         //yield return new WaitForSeconds(stateInfo.length/2.0f);
         yield return new WaitForSeconds(stateInfo.length);
 
